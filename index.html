@@ -86,6 +86,8 @@ video{width:100%;border-radius:18px;margin-top:12px;background:#000}
 .huge{font-size:70px}
 .burst{animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
 @keyframes pop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+.ctx{background:#f3e8ff;border-radius:14px;padding:8px 12px;margin:12px auto 0;max-width:520px;font-size:17px;font-weight:700;color:var(--ink)}
+.ctx span{display:block;font-size:12px;font-weight:800;color:var(--lav);letter-spacing:.5px;text-transform:uppercase}
 .toggle{float:right;font-size:14px;min-height:40px;padding:8px 12px;margin:0}
 svg.vm{width:100%;height:70px;display:block;margin-top:10px}
 .petal{position:fixed;top:-30px;z-index:0;pointer-events:none;width:14px;height:12px;background:#ffc1dc;border-radius:12px 0 12px 0;opacity:.8;animation:fall linear infinite}
@@ -325,7 +327,9 @@ editcues(){
  $('#sv').onclick=()=>{const ts=$$('.et');p.pack.cues=$$('.ev').map((e,i)=>({v:+e.value,c:ts[i].value.trim()}));save();FLASH='Cues saved.';go('admin')};
 },
 cards(s){
- const p=P(),idx=sel(s),lab=selLabel(s);let q=shuffle(idx),shown=false,rev=false;
+ const p=P(),idx=sel(s),lab=selLabel(s);let mix=false,q=idx.slice(),shown=false,rev=false;
+ const firsts={};p.stanzas.forEach(L=>{firsts[L[0]]=(firsts[L[0]]||0)+1});
+ const ctx=i=>{if(i===0)return '<div class="ctx">✦ The very beginning</div>';const prev=p.stanzas[i-1];return `<div class="ctx"><span>Comes right after</span>“${esc(prev[prev.length-1])}”</div>`};
  if(!q.length){go('home');return}
  const draw=()=>{
   if(!q.length){app.innerHTML=`<div class="card center"><div class="huge burst">🌟</div><h2>${lab} round done! ✦</h2>${stars(p,idx)}<button class="btn red" onclick="go('cards','${s}')">Go again</button><button class="btn ghost" onclick="go('home')">Home</button></div>`;return}
@@ -334,8 +338,9 @@ cards(s){
   else if(rev){a=L[L.length-1];b=L.slice(0,-1).join('\n')}
   else{a=L[0];b=L.slice(1).join('\n')}
   const hid='<p class="line hidden">✦ ✦ ✦</p>';
-  app.innerHTML=`${back()}<div class="card center flash" style="border-top:12px solid ${colorOf(p,cur)}">${L.length>1?`<button class="btn ghost toggle" id="rev">${rev?'Mode: end → start':'Mode: start → end'}</button>`:''}<div class="muted">${lab} · Stanza ${cur+1} · ${q.length} left</div>${rev&&!shown?hid:''}${rev&&shown?`<p class="line ans">${br(b)}</p>`:''}<p class="line">${esc(a)}</p>${!rev&&shown?`<p class="line ans">${br(b)}</p>`:''}${shown?`${cueBox(p,cur)}<button class="btn green" id="ok">Got it ✓</button><button class="btn ghost" id="again">Again ↺</button>`:`${rev?'':hid}<p class="muted">Say the ${rev?'part before':'rest'} out loud, then check.</p><button class="btn red" id="show">Show answer</button>`}</div>${stars(p,idx)}`;
+  app.innerHTML=`${back()}<div class="card center flash" style="border-top:12px solid ${colorOf(p,cur)}">${L.length>1?`<button class="btn ghost toggle" id="rev">${rev?'Mode: end → start':'Mode: start → end'}</button>`:''}<button class="btn ghost toggle" id="mix" style="float:left">${mix?'🔀 Shuffled':'➡️ In order'}</button><div class="muted" style="clear:both;padding-top:6px">${lab} · Stanza ${cur+1} · ${q.length} left</div>${!rev&&(firsts[L[0]]>1||mix)?ctx(cur):''}${rev&&!shown?hid:''}${rev&&shown?`<p class="line ans">${br(b)}</p>`:''}<p class="line">${esc(a)}</p>${!rev&&shown?`<p class="line ans">${br(b)}</p>`:''}${shown?`${cueBox(p,cur)}<button class="btn green" id="ok">Got it ✓</button><button class="btn ghost" id="again">Again ↺</button>`:`${rev?'':hid}<p class="muted">Say the ${rev?'part before':'rest'} out loud, then check.</p><button class="btn red" id="show">Show answer</button>`}</div>${stars(p,idx)}`;
   if($('#rev'))$('#rev').onclick=()=>{rev=!rev;shown=false;draw()};
+  $('#mix').onclick=()=>{mix=!mix;q=mix?shuffle(q):idx.filter(i=>q.includes(i));shown=false;draw()};
   if(shown){
    $('#ok').onclick=()=>{p.score[cur]=(p.score[cur]||0)+1;save();q.shift();shown=false;draw()};
    $('#again').onclick=()=>{p.score[cur]=Math.max(0,(p.score[cur]||0)-1);save();q.push(q.shift());shown=false;draw()};
